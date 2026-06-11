@@ -4,160 +4,146 @@ import { useMemo, useState } from "react";
 import { Loader2, Mail, MessageSquareText, Send, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 
-const initialForm = {
+const initialFormState = {
   name: "",
   email: "",
   message: "",
 };
 
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ContactMessageForm() {
-  const [form, setForm] = useState(initialForm);
-  const [feedback, setFeedback] = useState("");
-  const [feedbackType, setFeedbackType] = useState("");
+  const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [error, setError] = useState("");
 
   const isFormValid = useMemo(() => {
-    const name = form.name.trim();
-    const email = form.email.trim();
-    const message = form.message.trim();
-
-    return Boolean(name && email && message && isValidEmail(email));
-  }, [form]);
+    return (
+      formData.name.trim().length >= 2 &&
+      emailPattern.test(formData.email.trim()) &&
+      formData.message.trim().length >= 10
+    );
+  }, [formData.email, formData.message, formData.name]);
 
   function handleChange(event) {
     const { name, value } = event.target;
 
-    setForm((currentForm) => ({
-      ...currentForm,
+    setFormData((current) => ({
+      ...current,
       [name]: value,
     }));
 
-    if (feedback) {
-      setFeedback("");
-      setFeedbackType("");
-    }
+    if (feedback) setFeedback("");
+    if (error) setError("");
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const name = form.name.trim();
-    const email = form.email.trim();
-    const message = form.message.trim();
-
-    setFeedback("");
-    setFeedbackType("");
-
-    if (!name || !email || !message) {
-      setFeedback("Nama, email, dan pesan wajib diisi.");
-      setFeedbackType("error");
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      setFeedback("Format email tidak valid.");
-      setFeedbackType("error");
-      return;
-    }
+    if (!isFormValid || isSubmitting) return;
 
     setIsSubmitting(true);
+    setFeedback("");
+    setError("");
+
+    const payload = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      message: formData.message.trim(),
+    };
 
     try {
-      const response = await fetch("/api", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          message,
-        }),
-      });
-
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(
-          result?.message || "Pesan gagal dikirim. Coba lagi nanti.",
-        );
+      if (!isSupabaseConfigured || !supabase) {
+        throw new Error("Konfigurasi Supabase belum tersedia.");
       }
 
-      setFeedback(result?.message || "Pesan berhasil dikirim ke Gmail.");
-      setFeedbackType("success");
-      setForm(initialForm);
-    } catch (error) {
-      setFeedback(error.message || "Pesan gagal dikirim. Coba lagi nanti.");
-      setFeedbackType("error");
+      const { error: insertError } = await supabase
+        .from("contact_messages")
+        .insert([payload]);
+
+      if (insertError) {
+        throw new Error(insertError.message || "Pesan gagal dikirim.");
+      }
+
+      setFeedback("Pesan berhasil dikirim.");
+      setFormData(initialFormState);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Pesan gagal dikirim. Coba lagi nanti.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="relative">
-        <User className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-blue-100/40" />
+    <form
+      onSubmit={handleSubmit}
+      className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.055] p-4 shadow-2xl shadow-blue-950/30 backdrop-blur-2xl sm:p-6 lg:p-7"
+    >
+      <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-blue-300/50 to-transparent" />
 
-        <input
-          type="text"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="Nama Anda"
-          autoComplete="name"
-          className="h-12 w-full rounded-xl border border-white/15 bg-white/[0.07] pl-11 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-blue-100/40 focus:border-violet-300/40 focus:bg-white/[0.1] sm:h-14"
-        />
+      <div className="grid gap-4">
+        <label className="group grid gap-2">
+          <span className="flex items-center gap-2 text-sm font-bold text-blue-100/80">
+            <User className="size-4 text-blue-300" />
+            Nama
+          </span>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            minLength={2}
+            required
+            placeholder="Nama kamu"
+            className="h-12 rounded-2xl border border-white/10 bg-slate-950/45 px-4 text-sm font-medium text-white outline-none transition duration-300 placeholder:text-blue-100/30 focus:border-blue-300/40 focus:bg-slate-950/60 focus:ring-4 focus:ring-blue-400/10"
+          />
+        </label>
+
+        <label className="group grid gap-2">
+          <span className="flex items-center gap-2 text-sm font-bold text-blue-100/80">
+            <Mail className="size-4 text-blue-300" />
+            Email
+          </span>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            placeholder="email@example.com"
+            className="h-12 rounded-2xl border border-white/10 bg-slate-950/45 px-4 text-sm font-medium text-white outline-none transition duration-300 placeholder:text-blue-100/30 focus:border-blue-300/40 focus:bg-slate-950/60 focus:ring-4 focus:ring-blue-400/10"
+          />
+        </label>
+
+        <label className="group grid gap-2">
+          <span className="flex items-center gap-2 text-sm font-bold text-blue-100/80">
+            <MessageSquareText className="size-4 text-blue-300" />
+            Pesan
+          </span>
+          <textarea
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            minLength={10}
+            required
+            rows={5}
+            placeholder="Tulis pesan kamu di sini"
+            className="min-h-36 resize-none rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-sm font-medium leading-7 text-white outline-none transition duration-300 placeholder:text-blue-100/30 focus:border-blue-300/40 focus:bg-slate-950/60 focus:ring-4 focus:ring-blue-400/10"
+          />
+        </label>
       </div>
-
-      <div className="relative">
-        <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-blue-100/40" />
-
-        <input
-          type="email"
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          placeholder="Email Anda"
-          autoComplete="email"
-          className="h-12 w-full rounded-xl border border-white/15 bg-white/[0.07] pl-11 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-blue-100/40 focus:border-violet-300/40 focus:bg-white/[0.1] sm:h-14"
-        />
-      </div>
-
-      <div className="relative">
-        <MessageSquareText className="pointer-events-none absolute left-4 top-4 size-4 text-blue-100/40" />
-
-        <textarea
-          name="message"
-          value={form.message}
-          onChange={handleChange}
-          placeholder="Pesan Anda"
-          rows={5}
-          className="min-h-[120px] w-full resize-none rounded-xl border border-white/15 bg-white/[0.07] py-4 pl-11 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-blue-100/40 focus:border-violet-300/40 focus:bg-white/[0.1]"
-        />
-      </div>
-
-      {feedback ? (
-        <div
-          className={`rounded-xl border px-4 py-3 text-sm leading-6 ${
-            feedbackType === "success"
-              ? "border-emerald-300/20 bg-emerald-500/10 text-emerald-100"
-              : "border-red-300/20 bg-red-500/10 text-red-100"
-          }`}
-        >
-          {feedback}
-        </div>
-      ) : null}
 
       <Button
         type="submit"
-        disabled={isSubmitting || !isFormValid}
-        className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 text-sm font-bold text-white shadow-xl shadow-violet-500/20 transition hover:-translate-y-0.5 hover:shadow-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:h-14"
+        disabled={!isFormValid || isSubmitting}
+        className="video-hover-button mt-5 h-12 w-full rounded-2xl bg-blue-500 text-sm font-black text-white shadow-xl shadow-blue-950/25 transition duration-300 hover:bg-blue-400 disabled:pointer-events-none disabled:opacity-55 sm:h-14"
       >
         {isSubmitting ? (
           <>
@@ -171,6 +157,18 @@ export function ContactMessageForm() {
           </>
         )}
       </Button>
+
+      {feedback && (
+        <p className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-400/10 px-4 py-3 text-sm font-bold text-emerald-200">
+          {feedback}
+        </p>
+      )}
+
+      {error && (
+        <p className="mt-4 rounded-2xl border border-red-300/15 bg-red-400/10 px-4 py-3 text-sm font-bold text-red-200">
+          {error}
+        </p>
+      )}
     </form>
   );
 }
