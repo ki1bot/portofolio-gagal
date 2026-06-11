@@ -1,13 +1,9 @@
-"use client";
-
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ImageIcon, Loader2, MessageSquare, Send, User, X } from "lucide-react";
 
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
-
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png"];
 
 function getFileExtension(fileName) {
@@ -19,8 +15,6 @@ function isValidImageFile(file) {
 }
 
 export function CommentForm() {
-  const router = useRouter();
-
   const [userName, setUserName] = useState("");
   const [content, setContent] = useState("");
   const [profileFile, setProfileFile] = useState(null);
@@ -53,7 +47,6 @@ export function CommentForm() {
       setProfileFile(null);
       setPreviewUrl("");
       event.target.value = "";
-
       setStatusType("error");
       setStatusMessage("Format foto harus JPG, JPEG, atau PNG.");
       return;
@@ -63,7 +56,6 @@ export function CommentForm() {
       setProfileFile(null);
       setPreviewUrl("");
       event.target.value = "";
-
       setStatusType("error");
       setStatusMessage("Ukuran foto maksimal 2MB.");
       return;
@@ -140,11 +132,8 @@ export function CommentForm() {
       setContent("");
       setProfileFile(null);
       setPreviewUrl("");
-
       setStatusType("success");
       setStatusMessage("Komentar berhasil dikirim.");
-
-      router.refresh();
     } catch (error) {
       setStatusType("error");
       setStatusMessage(
@@ -229,6 +218,7 @@ export function CommentForm() {
                 <p className="truncate text-sm font-semibold text-white">
                   {profileFile?.name}
                 </p>
+
                 <p className="text-xs text-blue-100/45">Foto siap diupload.</p>
               </div>
             </div>
