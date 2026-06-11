@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 const navItems = [
@@ -159,7 +158,6 @@ export function Navbar() {
     const navbarOffset = window.innerWidth < 768 ? 84 : 115;
     const rawPosition =
       section.getBoundingClientRect().top + window.scrollY - navbarOffset;
-
     const sectionPosition = sectionId === "home" ? 0 : Math.max(rawPosition, 0);
 
     window.scrollTo({
@@ -193,7 +191,6 @@ export function Navbar() {
       activeSectionRef.current = sectionFromPath;
       setActiveSection(sectionFromPath);
       setIsScrolled(window.scrollY > 16);
-
       updateIndicator(sectionFromPath);
 
       if (sectionFromPath !== "home") {
@@ -341,14 +338,14 @@ export function Navbar() {
           isScrolled || isOpen ? "py-3.5 md:py-5" : "py-5 md:py-8"
         }`}
       >
-        <Link
+        <a
           href="/"
           onClick={(event) => handleNavClick(event, "home")}
           className="group relative inline-flex items-center overflow-hidden rounded-full px-3 py-1.5 text-2xl font-black tracking-wide text-violet-300 transition-all duration-300 hover:-translate-y-0.5 hover:text-white hover:drop-shadow-[0_0_14px_rgba(168,85,247,0.45)] sm:px-5 sm:py-2 sm:text-[1.7rem]"
         >
           <span className="absolute inset-0 rounded-full bg-white/[0.05] opacity-0 transition duration-300 group-hover:opacity-100" />
           <span className="relative z-10">Rifqi</span>
-        </Link>
+        </a>
 
         <div
           ref={desktopNavRef}
