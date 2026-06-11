@@ -41,18 +41,18 @@ yarn-error.log*
 next-env.d.ts
 
 # local public assets
-# /public/sertifikat/*
-# !/public/sertifikat/.gitkeep
+/public/sertifikat/*
+!/public/sertifikat/.gitkeep
 
-# /public/assets/media/*
-# !/public/assets/media/.gitkeep
+/public/assets/media/*
+!/public/assets/media/.gitkeep
 
-# /public/assets/projects/*
-# !/public/assets/projects/.gitkeep
+/public/assets/projects/*
+!/public/assets/projects/.gitkeep
 
-# /public/assets/screen/*
-# !/public/assets/screen/.gitkeep
+/public/assets/screen/*
+!/public/assets/screen/.gitkeep
 
-# /public/assets/default-avatar.jpg
-# /public/assets/gradient-blue.jpg
-# /public/assets/logoKibot.png
+/public/assets/default-avatar.jpg
+/public/assets/gradient-blue.jpg
+/public/assets/logoKibot.png
