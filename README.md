@@ -6,7 +6,7 @@ Perkenalkan, saya **Rifqi Susanto**. Project ini adalah website portofolio priba
 
 Website ini dibangun menggunakan **Next.js**, **React**, **Tailwind CSS**, **Supabase**, dan **Nodemailer**.
 
-**Live Demo:** [https://k1bot.vercel.app](#)
+**Live Demo:** [https://www.rifqii.com](#)
 
 ---
 
